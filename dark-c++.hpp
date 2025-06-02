@@ -1,31 +1,53 @@
 #pragma once
-#if defined _WIN32 || defined __CYGWIN__
-  #ifdef BUILDING_DARK_C__
-    #define DARK_C___PUBLIC __declspec(dllexport)
-  #else
-    #define DARK_C___PUBLIC __declspec(dllimport)
-  #endif
-#else
-  #ifdef BUILDING_DARK_C__
-      #define DARK_C___PUBLIC __attribute__ ((visibility ("default")))
-  #else
-      #define DARK_C___PUBLIC
-  #endif
-#endif
+#include <type_traits>
+#include <tuple>
+#include <utility>
 
-namespace dark_c__ {
+namespace darkｰcᚐᚐ {
+template<auto F, std::size_t... Index, typename... Args>
+auto call_with_tuple(std::index_sequence<Index...> _, std::tuple<Args...>& args) {
+	(void) _;
+	return F(std::get<Index>(args)...);
+}
 
-class DARK_C___PUBLIC Dark_c__ {
+template<typename Parent, auto F, typename... Args>
+struct Dispatcher : Parent {
+	operator decltype(F(std::declval<Args>()...))() {
+		return call_with_tuple<F>(std::index_sequence_for<Args...>{}, *this);
+	}
+};
 
-public:
-  Dark_c__();
-  int get_number() const;
+template<auto... Fs>
+struct return_type_overload;
 
-private:
+template<auto F, auto... Fs>
+struct return_type_overload<F, Fs...> {
+	template<typename... Args>
+		requires std::is_invocable_v<decltype(F), Args...>
+	static auto f(Args... args) {
+		return Dispatcher<
+			decltype(return_type_overload<Fs...>::f(args...)),
+			F,
+			Args...
+		>{std::tuple<Args...>(args...)};
+	};
 
-  int number;
+	template<typename... Args>
+		requires (!std::is_invocable_v<decltype(F), Args...>)
+	static auto f(Args... args) {
+		return return_type_overload<Fs...>::f(args...);
+	};
+};
 
+template<>
+struct return_type_overload<> {
+	template<typename... Args>
+	static auto f(Args... args) {
+		return std::tuple<Args...>(args...);
+	};
 };
 
 }
 
+
+namespace dcpp = darkｰcᚐᚐ;

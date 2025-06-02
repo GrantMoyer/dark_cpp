@@ -1,9 +1,11 @@
+# A library with many techniques some consider to be unnatural
+
 project(
   'dark-c++',
   'cpp',
   version : '0.1',
   meson_version : '>= 1.3.0',
-  default_options : ['warning_level=3', 'cpp_std=c++14'],
+  default_options : ['warning_level=3', 'cpp_std=c++23'],
 )
 
 dependencies = [
